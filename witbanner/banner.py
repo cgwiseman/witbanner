@@ -49,22 +49,33 @@ def init(sid=None, u=None, p=None):
 		query_string = urlencode({"service":service})
 		url = (baseurl + endpoint + query_string)
 
-		soup = BeautifulSoup(requests.get(url).text, "html.parser")
+		# cgw change 3, adding sessions
+		rs = requests.Session()
+
+		login_page = rs.get(url)
+		soup = BeautifulSoup(login_page.text, "html.parser")
 
 		f = soup.find("form")
 
-		action = baseurl + f["action"]
+		#action = baseurl + f["action"]
+		# cgw change 1, posting to same url as get
+		action = url
 		params = {}
 
 		for input_field in f.find_all("input", {"type":"hidden"}):
-			params[safestr(input_field["name"])] = safestr(input_field["value"])
+			# cgw change 2, handling hidden input tag with no value
+			if "value" in input_field.attrs:
+				params[safestr(input_field["name"])] = safestr(input_field["value"])
+			else:
+				params[safestr(input_field["name"])] = ""
 
 		##
 
 		params["username"] = input("Login: ") if u is None else u
 		params["password"] = getpass.getpass("Password: ") if p is None else p
 
-		r = requests.post(action, data=params)
+		r = rs.post(action, data=params)
+
 		if "SESSID" in r.cookies:
 			_SID = r.cookies["SESSID"]
 			return True
@@ -93,14 +104,14 @@ def safestr(s):
 ##############################################################################
 
 # necessary hack because banner doesn't properly close tags
-# seems to have been fixed!
-# def _getstring(tag):
-# 	firstline = safestr(tag).splitlines()[0]
-# 	return firstline[firstline.find(">")+1:].strip()
+def _getstring(tag):
+	# cgw change, banner seems better?
+	#firstline = safestr(tag).splitlines()[0]
+	#return firstline[firstline.find(">")+1:].strip()
+	return safestr(tag.text).strip()
 
 def _parse_select(select):
-	# return {safestr(option["value"]):_getstring(option) for option in select.find_all("option")}
-	return {safestr(option["value"]):safestr(option.string).strip() for option in select.find_all("option")}
+	return {safestr(option["value"]):_getstring(option) for option in select.find_all("option")}
 
 ##############################################################################
 ##############################################################################
@@ -337,7 +348,7 @@ def _parse_studentschedule(html):
 				if entry is not None and "meetings" not in entry:
 					entry["meetings"] = []
 					retval.append(entry)
-				
+
 				entry = {"title":safestr(datatable.caption.string)}
 
 				for row in datatable.find_all("tr"):
@@ -618,7 +629,7 @@ def _parse_studenttestscore(html):
 
 			if testname not in retval:
 				retval[testname] = []
-			retval[testname].append((testscore, testdate,))				
+			retval[testname].append((testscore, testdate,))
 
 	return retval
 
