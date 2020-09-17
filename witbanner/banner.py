@@ -16,7 +16,7 @@ import getpass
 ##############################################################################
 ##############################################################################
 
-_BASE_URL = "https://prodweb2.wit.edu"
+_BASE_URL = "https://selfservice.wit.edu"
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL'
 _SID = None
 
@@ -45,7 +45,7 @@ def init(sid=None, u=None, p=None):
 	if sid is None:
 		baseurl = "https://cas.wit.edu"
 		endpoint = "/cas/login?"
-		service = "https://prodweb2.wit.edu:443/ssomanager/c/SSB"
+		service = "https://selfservice.wit.edu:443/ssomanager/c/SSB"
 		query_string = urlencode({"service":service})
 		url = (baseurl + endpoint + query_string)
 
